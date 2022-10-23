@@ -1,8 +1,12 @@
 const Article = require('../models/article');
+const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/ForbiddenError');
+const NotFoundError = require('../errors/NotFoundError');
 
 const getAllArticles = (req, res, next) => {
-  Article.find({})
-    .then((articles) => res.send({ data: articles }))
+  const { _id } = req.user;
+  Article.find({ _id })
+    .then((articles) => res.status(200).send(articles))
     .catch(next);
 };
 
@@ -18,13 +22,28 @@ const createArticle = (req, res, next) => {
     image,
     owner: req.user._id,
   })
-    .then((article) => res.send({ data: article }))
-    .catch(next);
+    .then((article) => res.status(201).send({ data: article }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadRequestError(err.message));
+      }
+      return next(err);
+    });
 };
 
 const deleteArticle = (req, res, next) => {
-  Article.findByIdAndRemove(req.params.articleId)
-    .then((article) => res.send({ data: article }))
+  Article.findById(req.params.articleId)
+    .orFail(new NotFoundError('Article not found'))
+    .then((article) => {
+      if (article.owner.toString() !== req.user._id) {
+        return next(
+          new ForbiddenError('You are not allowed to delete this article')
+        );
+      }
+      return Article.findByIdAndRemove(req.params.articleId).then(
+        (deletedArticle) => res.status(200).send({ data: deletedArticle })
+      );
+    })
     .catch(next);
 };
 

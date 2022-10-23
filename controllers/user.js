@@ -24,14 +24,15 @@ const registerUser = (req, res, next) => {
       })
     )
     .then((user) =>
-      res.send({
+      res.status(201).send({
+        _id: user._id,
         name: user.name,
         email: user.email,
       })
     )
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Invalid user data'));
+        return next(new BadRequestError(err.message));
       }
       return next(err);
     });
@@ -45,7 +46,7 @@ const login = (req, res, next) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
         expiresIn: '7d',
       });
-      res.send({ token });
+      res.status(200).send({ token });
     })
     .catch(next);
 };
