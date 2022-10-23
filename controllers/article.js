@@ -4,8 +4,8 @@ const ForbiddenError = require('../errors/ForbiddenError');
 const NotFoundError = require('../errors/NotFoundError');
 
 const getAllArticles = (req, res, next) => {
-  const { _id } = req.user;
-  Article.find({ _id })
+  const owner = req.user._id;
+  Article.find({ owner })
     .then((articles) => res.status(200).send(articles))
     .catch(next);
 };
