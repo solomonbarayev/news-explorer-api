@@ -4,6 +4,7 @@ const User = require('../models/user');
 const ConflictError = require('../errors/ConflictError');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 const { JWT_SECRET } = require('../utils/config');
 
 const registerUser = (req, res, next) => {
@@ -41,6 +42,8 @@ const registerUser = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
+  console.log(JWT_SECRET);
+
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
@@ -48,7 +51,7 @@ const login = (req, res, next) => {
       });
       res.status(200).send({ token });
     })
-    .catch(next);
+    .catch(() => next(new UnauthorizedError('Invalid email or password')));
 };
 
 const getCurrentUser = (req, res, next) => {
