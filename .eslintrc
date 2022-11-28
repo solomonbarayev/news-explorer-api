@@ -17,6 +17,7 @@
         "argsIgnorePattern": "^_|^next$",
         "varsIgnorePattern": "^password$"
       }
-    ]
+    ],
+    "no-shadow": "off"
   }
 }
