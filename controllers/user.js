@@ -24,13 +24,10 @@ const registerUser = (req, res, next) => {
         name,
       })
     )
-    .then((user) =>
-      res.status(201).send({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-      })
-    )
+    .then((user) => {
+      const { password, ...userWithoutPassword } = user.toObject();
+      return res.status(201).send(userWithoutPassword);
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return next(new BadRequestError(err.message));
@@ -39,20 +36,17 @@ const registerUser = (req, res, next) => {
     });
 };
 
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-
-  console.log(JWT_SECRET);
-
-  return User.findUserByCredentials(email, password)
+const login = (req, res, next) =>
+  User.findUserByCredentials(req.body.email, req.body.password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
         expiresIn: '7d',
       });
-      res.status(200).send({ token });
+
+      const { password, ...userWithoutPassword } = user.toObject();
+      res.status(200).send({ token, user: userWithoutPassword });
     })
     .catch(() => next(new UnauthorizedError('Invalid email or password')));
-};
 
 const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
